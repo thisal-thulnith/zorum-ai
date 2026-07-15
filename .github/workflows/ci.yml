@@ -3,12 +3,31 @@ on: [push, pull_request]
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: zorum
+          POSTGRES_PASSWORD: zorum
+          POSTGRES_DB: zorum
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U zorum"
+          --health-interval 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql+asyncpg://zorum:zorum@localhost:5433/zorum
+      APP_DATABASE_URL: postgresql+asyncpg://zorum_app:zorum_app_dev@localhost:5433/zorum
+      ANTHROPIC_API_KEY: sk-ant-ci-placeholder   # real key not needed until eval jobs
+      JWT_SECRET: ci-only-secret-not-used-in-prod
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: cd backend && uv sync
-      - run: cd backend && uv run ruff check app
-      - run: cd backend && uv run pytest -q || [ $? -eq 5 ]   # 5 = no tests yet, allowed
+      - run: cd backend && uv run ruff check app tests alembic
+      - run: cd backend && uv run alembic upgrade head
+      - run: cd backend && uv run python -m app.seed
+      - run: cd backend && uv run pytest -q
   frontend:
     runs-on: ubuntu-latest
     steps:
