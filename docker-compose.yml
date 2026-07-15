@@ -5,7 +5,7 @@ services:
       POSTGRES_USER: zorum
       POSTGRES_PASSWORD: zorum
       POSTGRES_DB: zorum
-    ports: ["5432:5432"]
+    ports: ["5433:5432"]   # 5433 on the host — a native postgres already owns 5432 on this Mac
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U zorum"]

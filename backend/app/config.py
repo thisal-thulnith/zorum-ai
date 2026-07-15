@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    database_url: str
+    database_url: str          # admin role — Alembic migrations only
+    app_database_url: str      # restricted zorum_app role — runtime, RLS enforced
     anthropic_api_key: str
     jwt_secret: str
 
