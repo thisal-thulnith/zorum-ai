@@ -14,7 +14,7 @@ dependencies = [
     "pgvector>=0.5.0",
     "procrastinate>=3.9.0",
     "pwdlib[argon2]>=0.3.0",
-    "pydantic>=2.13.4",
+    "pydantic[email]>=2.13.4",
     "pydantic-settings>=2.14.2",
     "pyjwt>=2.13.0",
     "python-multipart>=0.0.32",
@@ -25,6 +25,10 @@ dependencies = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["."]
+# One event loop for the whole test session: our global DB engines' pooled
+# connections are loop-bound, and per-test loops would orphan them.
+asyncio_default_test_loop_scope = "session"
+asyncio_default_fixture_loop_scope = "session"
 
 [dependency-groups]
 dev = [

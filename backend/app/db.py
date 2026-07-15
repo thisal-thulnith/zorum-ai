@@ -11,7 +11,7 @@ import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
 
-from sqlalchemy import text
+from sqlalchemy import DateTime, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -21,9 +21,18 @@ from app.config import settings
 engine = create_async_engine(settings.app_database_url, echo=False)
 async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+# ADMIN engine — bypasses RLS. Allowed ONLY in the auth kernel (signup/login/refresh:
+# no tenant context exists yet) and in Alembic/seed scripts. Never in feature code.
+admin_engine = create_async_engine(settings.database_url, echo=False)
+admin_session_factory = async_sessionmaker(admin_engine, class_=AsyncSession, expire_on_commit=False)
+
 
 class Base(DeclarativeBase):
     """Base for global tables shared by all tenants (tenants, modules)."""
+
+    # Every Mapped[datetime] column becomes TIMESTAMP WITH TIME ZONE.
+    # Mixing naive columns with aware Python datetimes is a classic bug factory.
+    type_annotation_map = {datetime: DateTime(timezone=True)}
 
 
 class TenantBase(Base):
